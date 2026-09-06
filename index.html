@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>なんじにでるかな？　みんなで考える</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDPGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#f2f7fb;
+    --card:#ffffff;
+    --ink:#2b3a4a;
+    --ink-soft:#5a6b7b;
+    --primary:#3f8cd6;
+    --primary-dark:#2f6fae;
+    --accent:#ff9f5a;
+    --accent-dark:#f0873a;
+    --correct:#43b581;
+    --correct-dark:#369268;
+    --soft:#e7f0f8;
+    --line:#d6e2ee;
+    --shadow:0 4px 14px rgba(46,90,140,.12);
+  }
+  *{ box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+  html,body{ margin:0; padding:0; height:100%; }
+  body{
+    font-family:"BIZ UDPGothic", sans-serif;
+    background:var(--bg);
+    color:var(--ink);
+    -webkit-user-select:none; user-select:none;
+    -webkit-touch-callout:none;
+    touch-action:manipulation;
+    line-height:1.5;
+    overscroll-behavior:none;
+  }
+  ruby rt{ font-size:.58em; font-weight:400; }
+  #app{ max-width:1100px; margin:0 auto; padding:16px; min-height:100%; }
+  .screen{ display:none; }
+  .screen.active{ display:block; animation:fade .25s ease; }
+  @keyframes fade{ from{opacity:0; transform:translateY(6px);} to{opacity:1; transform:none;} }
+
+  .card{ background:var(--card); border-radius:18px; padding:14px 20px; box-shadow:var(--shadow); margin-bottom:12px; }
+  h1{ font-size:30px; margin:6px 0 2px; text-align:center; }
+  .subtitle{ text-align:center; color:var(--ink-soft); font-size:16px; margin-bottom:8px; }
+
+  button{ font-family:inherit; cursor:pointer; border:none; border-radius:14px; font-weight:700; touch-action:manipulation; }
+  .btn{ min-height:48px; padding:6px 20px; font-size:19px; color:#fff; background:var(--primary); box-shadow:0 3px 0 var(--primary-dark); transition:transform .05s; }
+  .btn:active{ transform:translateY(2px); box-shadow:0 1px 0 var(--primary-dark); }
+  .btn.accent{ background:var(--accent); box-shadow:0 3px 0 var(--accent-dark); }
+  .btn.correct{ background:var(--correct); box-shadow:0 3px 0 var(--correct-dark); }
+  .btn.ghost{ background:#fff; color:var(--primary); border:2px solid var(--line); box-shadow:none; }
+  .btn.small{ min-height:44px; padding:4px 16px; font-size:16px; color:var(--ink-soft); }
+  .btn:disabled{ opacity:.45; box-shadow:none; }
+
+  .levels{ display:flex; flex-direction:column; gap:12px; }
+  .level-btn{ display:flex; align-items:center; gap:14px; width:100%; background:#fff; border:2px solid var(--line); border-radius:16px; padding:14px 16px; text-align:left; min-height:66px; transition:.12s; }
+  .level-btn:active{ transform:scale(.99); }
+  .level-num{ flex:0 0 auto; width:46px; height:46px; border-radius:12px; background:var(--soft); color:var(--primary-dark); display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:700; }
+  .level-txt b{ font-size:19px; }
+  .level-txt span{ display:block; font-size:14px; color:var(--ink-soft); }
+
+  .settings summary{ cursor:pointer; font-weight:700; color:var(--primary-dark); list-style:none; padding:8px 4px; font-size:17px; }
+  .settings summary::-webkit-details-marker{ display:none; }
+  .settings summary::before{ content:"▸ "; }
+  .settings[open] summary::before{ content:"▾ "; }
+  .set-row{ display:flex; flex-wrap:wrap; align-items:center; gap:10px; margin:14px 2px; }
+  .set-row .label{ flex:0 0 130px; font-size:16px; }
+  .seg{ display:flex; gap:8px; flex-wrap:wrap; }
+  .seg button{ min-height:44px; padding:0 16px; font-size:16px; border-radius:12px; background:#eef4fa; color:var(--ink); border:2px solid transparent; }
+  .seg button.on{ background:var(--primary); color:#fff; }
+
+  .progress{ text-align:center; color:var(--ink-soft); font-size:15px; margin-bottom:6px; }
+  .question{ font-size:23px; text-align:center; margin:2px 4px 10px; }
+  .question .hl{ color:var(--primary-dark); font-weight:700; }
+
+  /* --- アニメーション(画面いっぱいに大きく) --- */
+  .anim-wrap{ text-align:center; margin:4px 0; }
+  canvas{ width:100%; max-width:900px; height:auto; background:#eef5fb; border-radius:18px; display:block; margin:0 auto; box-shadow:0 6px 20px rgba(46,90,140,.16); }
+  .anim-controls{ display:flex; align-items:center; gap:10px; max-width:900px; margin:12px auto 4px; }
+  .anim-playbtn{ width:48px; height:48px; min-width:48px; border-radius:50%; background:#dceefc; color:var(--primary-dark); font-size:18px; border:none; flex:0 0 auto; display:flex; align-items:center; justify-content:center; }
+  .anim-playbtn:active{ background:#c8e4f9; }
+  .anim-playbtn.active{ background:var(--primary); color:#fff; }
+  .anim-range{ flex:1; height:48px; -webkit-appearance:none; appearance:none; background:transparent; touch-action:pan-x; }
+  .anim-range::-webkit-slider-runnable-track{ height:8px; border-radius:8px; background:#dceefc; }
+  .anim-range::-webkit-slider-thumb{ -webkit-appearance:none; width:28px; height:28px; margin-top:-10px; border-radius:50%; background:#dceefc; border:3px solid var(--primary); box-shadow:0 1px 4px rgba(0,0,0,.2); }
+  .anim-range::-moz-range-track{ height:8px; border-radius:8px; background:#dceefc; }
+  .anim-range::-moz-range-thumb{ width:28px; height:28px; border-radius:50%; background:#dceefc; border:3px solid var(--primary); box-shadow:0 1px 4px rgba(0,0,0,.2); }
+
+  .feedback{ text-align:center; font-size:22px; font-weight:700; min-height:30px; margin:10px 0 2px; }
+  .feedback.ok{ color:var(--correct-dark); }
+  .explain{ background:var(--soft); border-radius:12px; padding:10px 16px; font-size:18px; color:var(--ink); margin:6px auto; max-width:640px; display:none; text-align:center; }
+  .explain.show{ display:block; }
+
+  .btn-row{ display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-top:10px; }
+
+  .result-big{ font-size:30px; text-align:center; font-weight:700; color:var(--primary-dark); margin:8px 0; }
+  .result-msg{ text-align:center; font-size:20px; margin:8px 0 16px; }
+
+  .topbar{ display:flex; justify-content:space-between; align-items:center; margin-bottom:6px; }
+  .home-btn{ min-height:44px; padding:0 14px; font-size:15px; background:#fff; color:var(--primary); border:2px solid var(--line); }
+
+  .stepper-box{ display:flex; align-items:center; gap:8px; }
+  .step-btn{ width:54px; height:54px; font-size:26px; border-radius:14px; background:#fff; color:var(--primary); border:2px solid var(--line); }
+  .step-btn:active{ background:var(--soft); }
+  .num-in{ width:70px; height:54px; font-size:24px; text-align:center; border:2px solid var(--line); border-radius:14px; font-family:inherit; font-weight:700; color:var(--ink); background:#fff; -webkit-user-select:text; user-select:text; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- スタート画面 -->
+  <section id="screen-start" class="screen active">
+    <div class="card">
+      <h1><ruby>何時<rt>なんじ</rt></ruby>に<ruby>出<rt>で</rt></ruby>るかな？</h1>
+      <p class="subtitle">みんなで<ruby>考<rt>かんが</rt></ruby>えよう</p>
+    </div>
+
+    <div class="card">
+      <p style="text-align:center; font-size:18px; margin:0 0 12px;">やってみたいレベルを<ruby>選<rt>えら</rt></ruby>んでね</p>
+      <div class="levels" id="level-list"></div>
+    </div>
+
+    <div class="card">
+      <details class="settings">
+        <summary><ruby>先生<rt>せんせい</rt></ruby><ruby>向<rt>む</rt></ruby>け<ruby>設定<rt>せってい</rt></ruby></summary>
+        <div class="set-row">
+          <span class="label"><ruby>難<rt>むずか</rt></ruby>しさ</span>
+          <div class="seg" id="seg-diff">
+            <button data-v="easy"><ruby>易<rt>やさ</rt></ruby>しい</button>
+            <button data-v="normal" class="on"><ruby>普通<rt>ふつう</rt></ruby></button>
+            <button data-v="hard"><ruby>難<rt>むずか</rt></ruby>しい</button>
+          </div>
+        </div>
+        <div class="set-row">
+          <span class="label"><ruby>出発<rt>しゅっぱつ</rt></ruby>・<ruby>到着<rt>とうちゃく</rt></ruby></span>
+          <div class="seg" id="seg-direction">
+            <button data-v="random" class="on">ランダム</button>
+            <button data-v="depart"><ruby>出発<rt>しゅっぱつ</rt></ruby><ruby>時刻<rt>じこく</rt></ruby></button>
+            <button data-v="arrival"><ruby>到着<rt>とうちゃく</rt></ruby><ruby>時刻<rt>じこく</rt></ruby></button>
+          </div>
+        </div>
+        <div class="set-row">
+          <span class="label"><ruby>問題<rt>もんだい</rt></ruby>の<ruby>数<rt>かず</rt></ruby></span>
+          <div class="stepper-box">
+            <button class="step-btn" id="cnt-minus">▽</button>
+            <input class="num-in" id="cnt-in" type="number" inputmode="numeric" value="5" min="1" max="20">
+            <button class="step-btn" id="cnt-plus">△</button>
+            <span class="unit"><ruby>問<rt>もん</rt></ruby></span>
+          </div>
+        </div>
+      </details>
+    </div>
+  </section>
+
+  <!-- 活動画面 -->
+  <section id="screen-play" class="screen">
+    <div class="topbar">
+      <button class="home-btn" id="btn-home">← <ruby>戻<rt>もど</rt></ruby>る</button>
+      <div class="progress" id="progress"></div>
+    </div>
+    <div class="card">
+      <div class="question" id="question"></div>
+      <div id="anim-slot" class="anim-wrap"></div>
+      <div class="feedback" id="feedback"></div>
+      <div class="explain" id="explain"></div>
+      <div class="btn-row" id="btn-row"></div>
+    </div>
+  </section>
+
+  <!-- 結果画面(問題の一覧のふりかえりのみ。正誤の記録はしない) -->
+  <section id="screen-result" class="screen">
+    <div class="card">
+      <h1><ruby>終<rt>お</rt></ruby>わり</h1>
+      <div class="result-big" id="res-score"></div>
+      <div class="result-msg" id="res-msg"></div>
+      <div class="btn-row">
+        <button class="btn accent" id="btn-again">もう<ruby>一度<rt>いちど</rt></ruby></button>
+        <button class="btn ghost" id="btn-back">レベルを<ruby>選<rt>えら</rt></ruby>ぶ</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   じょうたい(state)
+   ※このバージョンは 一斉授業(大型ディスプレイ)用のため、
+     正誤判定・スコア・音は もたない。
+     「答えを見る」ボタンをおすまで 正解の時刻は表示しない。
+============================================================ */
+const state = {
+  level: 1,
+  settings: { diff: "normal", count: 5, direction: "random" },
+  problems: [],
+  idx: 0,
+  revealed: false,
+};
+
+/* レベルは 1・2・5(内部番号) のみ あつかう。
+   表示上は 1・2・3 と連番になるよう、内部番号(level)と
+   表示番号(dispN)を分けてもたせる。 */
+const LEVELS = [
+  { level:1, dispN:1, name:`<ruby>歩<rt>ある</rt></ruby>く<ruby>時間<rt>じかん</rt></ruby>`,
+        desc:`<ruby>家<rt>いえ</rt></ruby>と<ruby>駅<rt>えき</rt></ruby>の<ruby>歩<rt>ある</rt></ruby>く<ruby>時間<rt>じかん</rt></ruby>` },
+  { level:2, dispN:2, name:`<ruby>電車<rt>でんしゃ</rt></ruby>の<ruby>時間<rt>じかん</rt></ruby>`,
+        desc:`<ruby>電車<rt>でんしゃ</rt></ruby>に<ruby>乗<rt>の</rt></ruby>る<ruby>時間<rt>じかん</rt></ruby>の<ruby>計算<rt>けいさん</rt></ruby>` },
+  { level:5, dispN:3, name:`B<ruby>駅<rt>えき</rt></ruby>まで<ruby>行<rt>い</rt></ruby>く`,
+        desc:`<ruby>近<rt>ちか</rt></ruby>くのA<ruby>駅<rt>えき</rt></ruby>から<ruby>電車<rt>でんしゃ</rt></ruby>でB<ruby>駅<rt>えき</rt></ruby>へ` },
+];
+
+/* 難易度パラメーター
+   walk(歩く時間)は 候補リストからランダムに1つ選ぶ(離散値・最大15分)
+   ride(電車の時間)は 5分きざみの範囲からランダム */
+const DIFF = {
+  easy:   { walk:[2,3,4,5],      ride:[10,25], crossHour:false },
+  normal: { walk:[3,5,10],       ride:[10,35], crossHour:true  },
+  hard:   { walk:[5,8,10,12,15], ride:[20,45], crossHour:true  },
+};
+
+/* ============================================================
+   じかんの けいさん(0時からの ぷんで あつかう)
+============================================================ */
+function fmt(m){ m=((m%1440)+1440)%1440; return {h:Math.floor(m/60), mm:m%60}; }
+function jRuby(m){ const t=fmt(m); return t.mm===0 ? `${t.h}<ruby>時<rt>じ</rt></ruby>` : `${t.h}<ruby>時<rt>じ</rt></ruby>${t.mm}<ruby>分<rt>ふん</rt></ruby>`; }
+function jHL(m){ return `<span class="hl">${jRuby(m)}</span>`; }
+function jPlain(m){ const t=fmt(m); return t.mm===0 ? `${t.h}時` : `${t.h}時${t.mm}分`; }
+
+function rInt(a,b){ return a+Math.floor(Math.random()*(b-a+1)); }
+function choice(a){ return a[Math.floor(Math.random()*a.length)]; }
+function sameHour(a,b){ return Math.floor(a/60)===Math.floor(b/60); }
+function rM5(range){ const a=range[0], b=range[1]; const steps=Math.max(0,Math.floor((b-a)/5)); return a+5*rInt(0,steps); }
+function time5(hmin,hmax){ return rInt(hmin,hmax)*60 + rInt(0,11)*5; }
+
+/* ============================================================
+   もんだい せいせい(れべる1,2,5のみ)
+============================================================ */
+function pickBack(){
+  const d=state.settings.direction;
+  if(d==="depart") return false;
+  if(d==="arrival") return true;
+  return Math.random()<0.5;
+}
+
+function makeProblem(level){
+  const p = DIFF[state.settings.diff];
+
+  if(level===1){
+    const walk = choice(p.walk);
+    const back = pickBack();
+    if(!back){
+      let now;
+      do{ now=time5(7,17); }while(!p.crossHour && !sameHour(now, now+walk));
+      const ans = now+walk;
+      return {
+        q:`<ruby>家<rt>いえ</rt></ruby>から<ruby>駅<rt>えき</rt></ruby>まで<ruby>歩<rt>ある</rt></ruby>いて ${walk}<ruby>分<rt>ふん</rt></ruby>かかるよ。<br><ruby>今<rt>いま</rt></ruby> ${jHL(now)}です。<br><ruby>何時<rt>なんじ</rt></ruby><ruby>何分<rt>なんぷん</rt></ruby>に<ruby>駅<rt>えき</rt></ruby>に<ruby>着<rt>つ</rt></ruby>くかな？`,
+        ans,
+        exp:`${jPlain(now)} に ${walk}分<ruby>足<rt>た</rt></ruby>すと ${jPlain(ans)} です。`,
+        anim:{ start:now, segs:[{kind:"walk", from:"家", to:"駅", dur:walk}], knownIdx:0, knownTime:now },
+      };
+    }else{
+      let arr;
+      do{ arr=time5(8,18); }while(!p.crossHour && !sameHour(arr, arr-walk));
+      const ans = arr-walk;
+      return {
+        q:`${jHL(arr)}に<ruby>駅<rt>えき</rt></ruby>に<ruby>着<rt>つ</rt></ruby>きたいな。<br><ruby>歩<rt>ある</rt></ruby>くと ${walk}<ruby>分<rt>ふん</rt></ruby>かかるよ。<br><ruby>何時<rt>なんじ</rt></ruby><ruby>何分<rt>なんぷん</rt></ruby>に<ruby>家<rt>いえ</rt></ruby>を<ruby>出<rt>で</rt></ruby>たらいいかな？`,
+        ans,
+        exp:`${jPlain(arr)} から ${walk}分<ruby>前<rt>まえ</rt></ruby>は ${jPlain(ans)} です。`,
+        anim:{ start:ans, segs:[{kind:"walk", from:"家", to:"駅", dur:walk}], knownIdx:1, knownTime:arr, reverse:true },
+      };
+    }
+  }
+
+  if(level===2){
+    const ride = rM5(p.ride);
+    const back = pickBack();
+    if(!back){
+      let now;
+      do{ now=time5(7,17); }while(!p.crossHour && !sameHour(now, now+ride));
+      const ans = now+ride;
+      return {
+        q:`${jHL(now)}に<ruby>電車<rt>でんしゃ</rt></ruby>に<ruby>乗<rt>の</rt></ruby>ったよ。<br><ruby>電車<rt>でんしゃ</rt></ruby>は ${ride}<ruby>分<rt>ふん</rt></ruby>かかるよ。<br><ruby>何時<rt>なんじ</rt></ruby><ruby>何分<rt>なんぷん</rt></ruby>に<ruby>着<rt>つ</rt></ruby>くかな？`,
+        ans,
+        exp:`${jPlain(now)} に ${ride}分<ruby>足<rt>た</rt></ruby>すと ${jPlain(ans)} です。`,
+        anim:{ start:now, segs:[{kind:"train", from:"A駅", to:"B駅", dur:ride}], knownIdx:0, knownTime:now },
+      };
+    }else{
+      let arr;
+      do{ arr=time5(8,18); }while(!p.crossHour && !sameHour(arr, arr-ride));
+      const ans = arr-ride;
+      return {
+        q:`${jHL(arr)}に<ruby>着<rt>つ</rt></ruby>きたいな。<br><ruby>電車<rt>でんしゃ</rt></ruby>は ${ride}<ruby>分<rt>ふん</rt></ruby>かかるよ。<br><ruby>何時<rt>なんじ</rt></ruby><ruby>何分<rt>なんぷん</rt></ruby>の<ruby>電車<rt>でんしゃ</rt></ruby>に<ruby>乗<rt>の</rt></ruby>ればいいかな？`,
+        ans,
+        exp:`${jPlain(arr)} から ${ride}分<ruby>前<rt>まえ</rt></ruby>は ${jPlain(ans)} です。`,
+        anim:{ start:ans, segs:[{kind:"train", from:"A駅", to:"B駅", dur:ride}], knownIdx:1, knownTime:arr, reverse:true },
+      };
+    }
+  }
+
+  /* level===5 */
+  const walk = choice(p.walk);
+  const ride = rM5(p.ride);
+  const back = pickBack();
+  if(back){
+    let goal;
+    do{ goal = time5(9,17); }while( goal - ride - walk < 6*60 );
+    const ans = goal - ride - walk;
+    return {
+      q:`B<ruby>駅<rt>えき</rt></ruby>に ${jHL(goal)}に<ruby>着<rt>つ</rt></ruby>きたいな。<br><ruby>家<rt>いえ</rt></ruby>からA<ruby>駅<rt>えき</rt></ruby>まで<ruby>歩<rt>ある</rt></ruby>いて ${walk}<ruby>分<rt>ふん</rt></ruby>、A<ruby>駅<rt>えき</rt></ruby>からB<ruby>駅<rt>えき</rt></ruby>まで<ruby>電車<rt>でんしゃ</rt></ruby>で ${ride}<ruby>分<rt>ふん</rt></ruby>かかるよ。<br><ruby>何時<rt>なんじ</rt></ruby><ruby>何分<rt>なんぷん</rt></ruby>に<ruby>家<rt>いえ</rt></ruby>を<ruby>出<rt>で</rt></ruby>たらいいかな？`,
+      ans,
+      exp:`${jPlain(goal)} から<ruby>電車<rt>でんしゃ</rt></ruby>の ${ride}分、<ruby>歩<rt>ある</rt></ruby>く ${walk}分 を<ruby>引<rt>ひ</rt></ruby>くと ${jPlain(ans)} です。`,
+      anim:{ start:ans, segs:[{kind:"walk",from:"家",to:"A駅",dur:walk},{kind:"train",from:"A駅",to:"B駅",dur:ride}], knownIdx:2, knownTime:goal, reverse:true },
+    };
+  }else{
+    let now;
+    do{ now = time5(7,17); }while( now + walk + ride >= 24*60 );
+    const ans = now + walk + ride;
+    return {
+      q:`<ruby>今<rt>いま</rt></ruby> ${jHL(now)}です。<ruby>家<rt>いえ</rt></ruby>からA<ruby>駅<rt>えき</rt></ruby>まで<ruby>歩<rt>ある</rt></ruby>いて ${walk}<ruby>分<rt>ふん</rt></ruby>、A<ruby>駅<rt>えき</rt></ruby>からB<ruby>駅<rt>えき</rt></ruby>まで<ruby>電車<rt>でんしゃ</rt></ruby>で ${ride}<ruby>分<rt>ふん</rt></ruby>かかるよ。<br><ruby>何時<rt>なんじ</rt></ruby><ruby>何分<rt>なんぷん</rt></ruby>にB<ruby>駅<rt>えき</rt></ruby>に<ruby>着<rt>つ</rt></ruby>くかな？`,
+      ans,
+      exp:`${jPlain(now)} に ${walk}分、${ride}分<ruby>足<rt>た</rt></ruby>すと ${jPlain(ans)} です。`,
+      anim:{ start:now, segs:[{kind:"walk",from:"家",to:"A駅",dur:walk},{kind:"train",from:"A駅",to:"B駅",dur:ride}], knownIdx:0, knownTime:now },
+    };
+  }
+}
+
+/* ============================================================
+   がめん きりかえ
+============================================================ */
+function show(id){
+  document.querySelectorAll(".screen").forEach(s=>s.classList.remove("active"));
+  document.getElementById(id).classList.add("active");
+  window.scrollTo(0,0);
+}
+
+function buildLevels(){
+  const box=document.getElementById("level-list");
+  box.innerHTML="";
+  LEVELS.forEach(l=>{
+    const b=document.createElement("button");
+    b.className="level-btn";
+    b.innerHTML=`<span class="level-num">${l.dispN}</span>
+      <span class="level-txt"><b>レベル${l.dispN}　${l.name}</b><span>${l.desc}</span></span>`;
+    b.addEventListener("click",()=> startLevel(l.level));
+    box.appendChild(b);
+  });
+}
+
+function bindSettings(){
+  document.querySelectorAll("#seg-diff button").forEach(b=>{
+    b.addEventListener("click",()=>{
+      document.querySelectorAll("#seg-diff button").forEach(x=>x.classList.remove("on"));
+      b.classList.add("on"); state.settings.diff=b.dataset.v;
+    });
+  });
+  document.querySelectorAll("#seg-direction button").forEach(b=>{
+    b.addEventListener("click",()=>{
+      document.querySelectorAll("#seg-direction button").forEach(x=>x.classList.remove("on"));
+      b.classList.add("on"); state.settings.direction=b.dataset.v;
+    });
+  });
+  const cnt=document.getElementById("cnt-in");
+  const clampCnt=()=>{ let v=parseInt(cnt.value)||5; v=Math.max(1,Math.min(20,v)); cnt.value=v; state.settings.count=v; };
+  document.getElementById("cnt-minus").addEventListener("click",()=>{ cnt.value=(parseInt(cnt.value)||5)-1; clampCnt(); });
+  document.getElementById("cnt-plus").addEventListener("click",()=>{ cnt.value=(parseInt(cnt.value)||5)+1; clampCnt(); });
+  cnt.addEventListener("change",clampCnt);
+}
+
+/* ============================================================
+   レベル かいし
+============================================================ */
+function startLevel(n){
+  state.level=n; state.idx=0;
+  state.problems=[];
+  for(let i=0;i<state.settings.count;i++){ state.problems.push(makeProblem(n)); }
+  show("screen-play");
+  renderQuestion();
+}
+
+/* ============================================================
+   もんだい がめん
+============================================================ */
+function renderQuestion(){
+  state.revealed=false;
+  const p=state.problems[state.idx];
+
+  document.getElementById("progress").innerHTML=`<ruby>問題<rt>もんだい</rt></ruby> ${state.idx+1} / ${state.problems.length}`;
+  document.getElementById("question").innerHTML=p.q;
+  document.getElementById("feedback").textContent="";
+  document.getElementById("feedback").className="feedback";
+  const exp=document.getElementById("explain");
+  exp.className="explain"; exp.innerHTML=p.exp;
+
+  const aslot=document.getElementById("anim-slot");
+  aslot.innerHTML="";
+  buildAnimUI(aslot);
+  setupAnimPlayback(p);
+
+  buildButtons();
+}
+
+function buildButtons(){
+  const row=document.getElementById("btn-row");
+  row.innerHTML=`
+    <button class="btn ghost small" id="btn-reveal"><ruby>答<rt>こた</rt></ruby>えを<ruby>見<rt>み</rt></ruby>る</button>
+    <button class="btn ghost small" id="btn-next"><ruby>次<rt>つぎ</rt></ruby>へ</button>`;
+  document.getElementById("btn-reveal").addEventListener("click",revealAnswer);
+  document.getElementById("btn-next").addEventListener("click",nextQuestion);
+}
+
+function revealAnswer(){
+  const p=state.problems[state.idx];
+  state.revealed=true;
+  const fb=document.getElementById("feedback");
+  fb.className="feedback ok"; fb.innerHTML=`<ruby>答<rt>こた</rt></ruby>えは <b>${jPlain(p.ans)}</b> だよ`;
+  document.getElementById("explain").classList.add("show");
+  document.getElementById("btn-reveal").disabled=true;
+  renderAnimFrame(); // 時計表示に切りかえるため 再描画
+}
+
+function nextQuestion(){
+  if(state.idx < state.problems.length-1){ state.idx++; renderQuestion(); }
+  else showResult();
+}
+
+function showResult(){
+  stopAnimAll();
+  document.getElementById("res-score").innerHTML=`${state.problems.length}<ruby>問<rt>もん</rt></ruby><ruby>終了<rt>しゅうりょう</rt></ruby>！`;
+  document.getElementById("res-msg").innerHTML=`みんなでよく<ruby>考<rt>かんが</rt></ruby>えたね`;
+  show("screen-result");
+}
+
+/* ============================================================
+   アニメーション(2D Canvas)
+   ・「答えを見る」を おすまでは 時計は「時刻」を表示しない。
+     かわりに ストップウォッチ(オレンジの円+回る針)で
+     「どれだけ時間がすすんだか」だけを見せる。
+   ・「答えを見る」の後は 時計(時刻)表示に切りかわる。
+   ・スライダー・◁▷ボタンで 前後どちらにも動かせる
+     (アニメ版「なんじにでるかなアニメで見る」と同じ方式)。
+   ・requestAnimationFrame は デルタタイム方式(120Hz端末でも同速)
+============================================================ */
+let animId=null;
+const animRun = { playing:false, total:0, durSec:6, progress:0, dir:1, lastTs:null, spec:null };
+const EDGE_EPS = 0.001;
+
+function stopAnimAll(){
+  animRun.playing=false; animRun.lastTs=null;
+  if(animId){ cancelAnimationFrame(animId); animId=null; }
+}
+
+function buildAnimUI(aslot){
+  aslot.innerHTML=`
+    <canvas id="anim-canvas" width="900" height="260"></canvas>
+    <div class="anim-controls">
+      <button class="anim-playbtn" id="anim-back">◁</button>
+      <input type="range" id="anim-scrub" class="anim-range" min="0" max="1000" value="0">
+      <button class="anim-playbtn" id="anim-fwd">▷</button>
+    </div>`;
+}
+
+function isReverseAnim(spec){ return !!(spec && spec.reverse); }
+
+function setupAnimPlayback(p){
+  stopAnimAll();
+  const spec=p.anim;
+  animRun.spec=spec;
+  const total=spec.segs.reduce((a,s)=>a+s.dur,0);
+  animRun.total=total;
+  animRun.durSec=Math.max(5, Math.min(10, total*0.4));
+  animRun.progress = 0;
+  animRun.playing=false; animRun.lastTs=null; animRun.dir=1;
+
+  const scrub=document.getElementById("anim-scrub");
+  scrub.value = 0;
+  scrub.oninput=(e)=>{
+    stopAnimPlaying();
+    animRun.progress=parseInt(e.target.value)/1000;
+    renderAnimFrame();
+  };
+
+  document.getElementById("anim-fwd").onclick=()=> togglePlayDir(1);
+  document.getElementById("anim-back").onclick=()=> togglePlayDir(-1);
+  updatePlayButtons();
+  renderAnimFrame();
+}
+
+function togglePlayDir(dir){
+  const atEnd = animRun.progress >= 1-EDGE_EPS;
+  const atStart = animRun.progress <= EDGE_EPS;
+  if(animRun.playing && animRun.dir===dir){ stopAnimPlaying(); return; }
+  if(dir===1 && atEnd){
+    animRun.progress=0;
+    const scrub=document.getElementById("anim-scrub"); if(scrub) scrub.value=0;
+    renderAnimFrame();
+  }
+  if(dir===-1 && atStart){
+    animRun.progress=1;
+    const scrub=document.getElementById("anim-scrub"); if(scrub) scrub.value=1000;
+    renderAnimFrame();
+  }
+  startAnimPlaying(dir);
+}
+function stopAnimPlaying(){
+  animRun.playing=false;
+  if(animId){ cancelAnimationFrame(animId); animId=null; }
+  updatePlayButtons();
+}
+function startAnimPlaying(dir){
+  animRun.dir=dir; animRun.playing=true; animRun.lastTs=null;
+  updatePlayButtons();
+  animId=requestAnimationFrame(animStep);
+}
+function updatePlayButtons(){
+  const fwdBtn=document.getElementById("anim-fwd");
+  const backBtn=document.getElementById("anim-back");
+  if(!fwdBtn || !backBtn) return;
+  const fwdOn = animRun.playing && animRun.dir===1;
+  const backOn = animRun.playing && animRun.dir===-1;
+  fwdBtn.classList.toggle("active", fwdOn);
+  backBtn.classList.toggle("active", backOn);
+  fwdBtn.textContent = fwdOn ? "❚❚" : "▷";
+  backBtn.textContent = backOn ? "❚❚" : "◁";
+}
+function animStep(ts){
+  if(!animRun.playing) return;
+  if(animRun.lastTs===null) animRun.lastTs=ts;
+  const dt=(ts-animRun.lastTs)/1000; animRun.lastTs=ts;
+  animRun.progress += (dt/animRun.durSec) * animRun.dir;
+  if(animRun.dir>0 && animRun.progress>=1-EDGE_EPS){ animRun.progress=1; stopAnimPlaying(); }
+  else if(animRun.dir<0 && animRun.progress<=EDGE_EPS){ animRun.progress=0; stopAnimPlaying(); }
+  const scrub=document.getElementById("anim-scrub");
+  if(scrub) scrub.value=Math.round(animRun.progress*1000);
+  renderAnimFrame();
+  if(animRun.playing) animId=requestAnimationFrame(animStep);
+  else animId=null;
+}
+
+function renderAnimFrame(){
+  const spec=animRun.spec;
+  if(!spec) return;
+  const prog=animRun.progress;
+  const curMin=spec.start + animRun.total*prog;
+  drawScene(spec, curMin, prog, state.revealed);
+}
+
+function drawScene(spec, curMin, progress, canReveal){
+  const c=document.getElementById("anim-canvas");
+  if(!c) return;
+  const ctx=c.getContext("2d");
+  const W=c.width, H=c.height;
+  ctx.clearRect(0,0,W,H);
+
+  const groundY=H-70;
+  ctx.fillStyle="#dbe9f4"; ctx.fillRect(0,groundY,W-210,H-groundY);
+  ctx.strokeStyle="#b9d0e4"; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(0,groundY); ctx.lineTo(W-210,groundY); ctx.stroke();
+
+  drawPathScene(ctx, spec, progress, curMin, W, H, groundY);
+
+  if(canReveal) drawClock(ctx, W-105, 92, 62, curMin);
+  else drawStopwatch(ctx, W-105, 92, 62, progress, animRun.total);
+}
+
+function drawPathScene(ctx, spec, progress, curMin, W, H, groundY){
+  const trackLeft=90, trackRight=W-280;
+  const segs=spec.segs;
+  const totalDur=segs.reduce((a,s)=>a+s.dur,0);
+
+  const points=[segs[0].from];
+  segs.forEach(s=>points.push(s.to));
+  const xs=[trackLeft];
+  let acc=0;
+  segs.forEach(s=>{ acc+=s.dur; xs.push(trackLeft + (trackRight-trackLeft)*(acc/totalDur)); });
+
+  for(let i=0;i<points.length;i++){
+    const x=xs[i];
+    if(points[i]==="家") drawHouse(ctx,x,groundY);
+    else drawStation(ctx,x,groundY);
+    ctx.fillStyle="#2b3a4a"; ctx.font="24px 'BIZ UDPGothic'"; ctx.textAlign="center";
+    ctx.fillText(points[i], x, groundY+46);
+    if(spec.knownIdx===i){
+      ctx.fillStyle="#2f6fae"; ctx.font="bold 21px 'BIZ UDPGothic'";
+      ctx.fillText(jPlain(spec.knownTime), x, groundY-78);
+    }
+  }
+
+  segs.forEach((s,i)=>{
+    const midX=(xs[i]+xs[i+1])/2;
+    ctx.fillStyle="#5a6b7b"; ctx.font="bold 20px 'BIZ UDPGothic'"; ctx.textAlign="center";
+    ctx.fillText(`${s.dur}分`, midX, groundY-82);
+  });
+
+  let px=trackLeft, kind="walk";
+  {
+    let moved=progress*totalDur;
+    let a=0;
+    for(let i=0;i<segs.length;i++){
+      if(moved<=a+segs[i].dur || i===segs.length-1){
+        const r=Math.min(1,Math.max(0,(moved-a)/segs[i].dur));
+        px = xs[i] + (xs[i+1]-xs[i])*r;
+        kind=segs[i].kind;
+        break;
+      }
+      a+=segs[i].dur;
+    }
+  }
+  if(kind==="walk") drawPerson(ctx,px,groundY,curMin);
+  else drawTrain(ctx,px,groundY);
+}
+
+function drawHouse(ctx,x,gy){
+  ctx.fillStyle="#f3b46b"; ctx.strokeStyle="#c98a3f"; ctx.lineWidth=3;
+  ctx.fillRect(x-26,gy-48,52,48); ctx.strokeRect(x-26,gy-48,52,48);
+  ctx.beginPath(); ctx.moveTo(x-32,gy-48); ctx.lineTo(x,gy-74); ctx.lineTo(x+32,gy-48); ctx.closePath();
+  ctx.fillStyle="#e07a5f"; ctx.fill();
+  ctx.fillStyle="#8b5e34"; ctx.fillRect(x-8,gy-29,16,29);
+}
+function drawStation(ctx,x,gy){
+  ctx.fillStyle="#8fb8de"; ctx.strokeStyle="#5f8fc0"; ctx.lineWidth=3;
+  ctx.fillRect(x-32,gy-54,64,54); ctx.strokeRect(x-32,gy-54,64,54);
+  ctx.fillStyle="#fff";
+  for(let i=0;i<2;i++)for(let j=0;j<2;j++) ctx.fillRect(x-21+i*26, gy-45+j*21, 16, 14);
+}
+function drawPerson(ctx,x,gy,curMin){
+  const bob=Math.sin(curMin*3)*3;
+  ctx.fillStyle="#3f8cd6";
+  ctx.beginPath(); ctx.arc(x,gy-48+bob,11,0,7); ctx.fill();
+  ctx.fillRect(x-8,gy-38+bob,16,26);
+  ctx.strokeStyle="#3f8cd6"; ctx.lineWidth=5;
+  const sw=Math.sin(curMin*4)*8;
+  ctx.beginPath(); ctx.moveTo(x-3,gy-12+bob); ctx.lineTo(x-6-sw,gy+bob);
+  ctx.moveTo(x+3,gy-12+bob); ctx.lineTo(x+6+sw,gy+bob); ctx.stroke();
+}
+function drawTrainBody(ctx,x,gy,w,h){
+  const y=gy-h;
+  ctx.fillStyle="#ff9f5a"; ctx.strokeStyle="#f0873a"; ctx.lineWidth=3;
+  ctx.beginPath();
+  ctx.moveTo(x-w/2, y+h);
+  ctx.lineTo(x-w/2, y+8);
+  ctx.quadraticCurveTo(x-w/2, y, x-w/2+11, y);
+  ctx.lineTo(x+w/2-17, y);
+  ctx.quadraticCurveTo(x+w/2, y, x+w/2, y+14);
+  ctx.lineTo(x+w/2, y+h);
+  ctx.closePath();
+  ctx.fill(); ctx.stroke();
+
+  ctx.fillStyle="#2f6fae";
+  ctx.fillRect(x-w/2, y+h*0.58, w, 6);
+
+  ctx.strokeStyle="#5a6b7b"; ctx.lineWidth=3; ctx.lineCap="round";
+  ctx.beginPath();
+  ctx.moveTo(x-9,y); ctx.lineTo(x-6,y-12); ctx.lineTo(x+6,y-12); ctx.lineTo(x+9,y);
+  ctx.stroke();
+  return y;
+}
+function drawTrainDoors(ctx,x,y,h,doorOpen,offset,doorW){
+  drawOneDoor(ctx,x-offset,y,h,doorOpen,doorW);
+  drawOneDoor(ctx,x+offset,y,h,doorOpen,doorW);
+}
+function drawOneDoor(ctx,cx,y,h,doorOpen,doorW){
+  const doorH=h-9;
+  const gapX=cx-doorW/2, gapY=y+5;
+  ctx.fillStyle="#3b4a5a";
+  ctx.fillRect(gapX,gapY,doorW,doorH);
+  const panelW=doorW/2;
+  const slide=panelW*0.9*doorOpen;
+  ctx.fillStyle="#dbe7f0"; ctx.strokeStyle="#17324d"; ctx.lineWidth=2;
+  ctx.fillRect(gapX-slide, gapY, panelW, doorH); ctx.strokeRect(gapX-slide, gapY, panelW, doorH);
+  ctx.fillRect(gapX+panelW+slide, gapY, panelW, doorH); ctx.strokeRect(gapX+panelW+slide, gapY, panelW, doorH);
+}
+function drawTrain(ctx,x,gy){
+  const w=100,h=42;
+  const y=drawTrainBody(ctx,x,gy,w,h);
+  ctx.fillStyle="#eaf3fb";
+  ctx.fillRect(x-14,y+9,13,13);
+  ctx.fillRect(x+1,y+9,13,13);
+  ctx.fillRect(x-47,y+9,13,13);
+  ctx.fillRect(x+34,y+9,13,13);
+  drawTrainDoors(ctx,x,y,h,0,25,19);
+}
+/* 時計(答えを見た後。時刻を表示) */
+function drawClock(ctx,cx,cy,r,curMin){
+  ctx.fillStyle="#fff"; ctx.strokeStyle="#3f8cd6"; ctx.lineWidth=4;
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,7); ctx.fill(); ctx.stroke();
+  ctx.strokeStyle="#9fb8cf"; ctx.lineWidth=3;
+  for(let i=0;i<12;i++){
+    const a=i*Math.PI/6;
+    ctx.beginPath();
+    ctx.moveTo(cx+Math.sin(a)*(r-6), cy-Math.cos(a)*(r-6));
+    ctx.lineTo(cx+Math.sin(a)*(r-14), cy-Math.cos(a)*(r-14));
+    ctx.stroke();
+  }
+  const t=fmt(curMin);
+  const mA=(t.mm/60)*2*Math.PI;
+  const hA=(((t.h%12)+t.mm/60)/12)*2*Math.PI;
+  ctx.strokeStyle="#2b3a4a"; ctx.lineWidth=6; ctx.lineCap="round";
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.sin(hA)*(r*0.5), cy-Math.cos(hA)*(r*0.5)); ctx.stroke();
+  ctx.strokeStyle="#3f8cd6"; ctx.lineWidth=5;
+  ctx.beginPath(); ctx.moveTo(cx,cy); ctx.lineTo(cx+Math.sin(mA)*(r*0.72), cy-Math.cos(mA)*(r*0.72)); ctx.stroke();
+  ctx.fillStyle="#2b3a4a"; ctx.beginPath(); ctx.arc(cx,cy,5,0,7); ctx.fill();
+  ctx.fillStyle="#2b3a4a"; ctx.font="bold 22px 'BIZ UDPGothic'"; ctx.textAlign="center";
+  ctx.fillText(jPlain(Math.round(curMin)), cx, cy+r+34);
+}
+/* ストップウォッチ(答えを見る前。経過時間だけを示す針が回る。
+   オレンジの円(外枠)は常に表示、青い進捗弧は使わず、
+   針が 問題全体の所要時間で ちょうど1周するようにする) */
+function drawStopwatch(ctx,cx,cy,r,progress,total){
+  ctx.fillStyle="#fff"; ctx.strokeStyle="#ff9f5a"; ctx.lineWidth=5;
+  ctx.beginPath(); ctx.arc(cx,cy,r,0,Math.PI*2); ctx.fill(); ctx.stroke();
+  ctx.fillStyle="#ff9f5a"; ctx.fillRect(cx-9,cy-r-14,18,15);
+
+  const angle = -Math.PI/2 + Math.PI*2*Math.max(0,Math.min(1,progress));
+  ctx.strokeStyle="#3f8cd6"; ctx.lineWidth=6; ctx.lineCap="round";
+  ctx.beginPath();
+  ctx.moveTo(cx,cy);
+  ctx.lineTo(cx+Math.cos(angle)*(r*0.68), cy+Math.sin(angle)*(r*0.68));
+  ctx.stroke();
+  ctx.fillStyle="#2b3a4a"; ctx.beginPath(); ctx.arc(cx,cy,5,0,7); ctx.fill();
+
+  ctx.fillStyle="#2b3a4a"; ctx.font="bold 22px 'BIZ UDPGothic'"; ctx.textAlign="center";
+  ctx.fillText(`${Math.round(total*Math.max(0,Math.min(1,progress)))}ふん`, cx, cy+r+34);
+}
+
+/* ============================================================
+   はいせん(bind) と きどう
+============================================================ */
+document.getElementById("btn-home").addEventListener("click",()=>{ stopAnimAll(); show("screen-start"); });
+document.getElementById("btn-again").addEventListener("click",()=> startLevel(state.level));
+document.getElementById("btn-back").addEventListener("click",()=> show("screen-start"));
+
+let lastTouch=0;
+document.addEventListener("touchend",e=>{
+  const now=Date.now();
+  if(now-lastTouch<=300){ e.preventDefault(); }
+  lastTouch=now;
+},{passive:false});
+document.addEventListener("gesturestart",e=>{ e.preventDefault(); });
+
+buildLevels();
+bindSettings();
+</script>
+</body>
+</html>
