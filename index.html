@@ -90,8 +90,6 @@
 
   .feedback{ text-align:center; font-size:22px; font-weight:700; min-height:30px; margin:10px 0 2px; }
   .feedback.ok{ color:var(--correct-dark); }
-  .explain{ background:var(--soft); border-radius:12px; padding:10px 16px; font-size:18px; color:var(--ink); margin:6px auto; max-width:640px; display:none; text-align:center; }
-  .explain.show{ display:block; }
 
   .btn-row{ display:flex; justify-content:center; gap:12px; flex-wrap:wrap; margin-top:10px; }
 
@@ -164,7 +162,6 @@
       <div class="question" id="question"></div>
       <div id="anim-slot" class="anim-wrap"></div>
       <div class="feedback" id="feedback"></div>
-      <div class="explain" id="explain"></div>
       <div class="btn-row" id="btn-row"></div>
     </div>
   </section>
@@ -392,8 +389,6 @@ function renderQuestion(){
   document.getElementById("question").innerHTML=p.q;
   document.getElementById("feedback").textContent="";
   document.getElementById("feedback").className="feedback";
-  const exp=document.getElementById("explain");
-  exp.className="explain"; exp.innerHTML=p.exp;
 
   const aslot=document.getElementById("anim-slot");
   aslot.innerHTML="";
@@ -417,7 +412,6 @@ function revealAnswer(){
   state.revealed=true;
   const fb=document.getElementById("feedback");
   fb.className="feedback ok"; fb.innerHTML=`<ruby>答<rt>こた</rt></ruby>えは <b>${jPlain(p.ans)}</b> だよ`;
-  document.getElementById("explain").classList.add("show");
   document.getElementById("btn-reveal").disabled=true;
   renderAnimFrame(); // 時計表示に切りかえるため 再描画
 }
