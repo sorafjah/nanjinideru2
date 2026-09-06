@@ -126,16 +126,16 @@
         <div class="set-row">
           <span class="label"><ruby>難<rt>むずか</rt></ruby>しさ</span>
           <div class="seg" id="seg-diff">
-            <button data-v="easy"><ruby>易<rt>やさ</rt></ruby>しい</button>
-            <button data-v="normal" class="on"><ruby>普通<rt>ふつう</rt></ruby></button>
+            <button data-v="easy" class="on"><ruby>易<rt>やさ</rt></ruby>しい</button>
+            <button data-v="normal"><ruby>普通<rt>ふつう</rt></ruby></button>
             <button data-v="hard"><ruby>難<rt>むずか</rt></ruby>しい</button>
           </div>
         </div>
         <div class="set-row">
           <span class="label"><ruby>出発<rt>しゅっぱつ</rt></ruby>・<ruby>到着<rt>とうちゃく</rt></ruby></span>
           <div class="seg" id="seg-direction">
-            <button data-v="random" class="on">ランダム</button>
-            <button data-v="depart"><ruby>出発<rt>しゅっぱつ</rt></ruby><ruby>時刻<rt>じこく</rt></ruby></button>
+            <button data-v="random">ランダム</button>
+            <button data-v="depart" class="on"><ruby>出発<rt>しゅっぱつ</rt></ruby><ruby>時刻<rt>じこく</rt></ruby></button>
             <button data-v="arrival"><ruby>到着<rt>とうちゃく</rt></ruby><ruby>時刻<rt>じこく</rt></ruby></button>
           </div>
         </div>
@@ -192,7 +192,7 @@
 ============================================================ */
 const state = {
   level: 1,
-  settings: { diff: "normal", count: 5, direction: "random" },
+  settings: { diff: "easy", count: 5, direction: "depart" },
   problems: [],
   idx: 0,
   revealed: false,
